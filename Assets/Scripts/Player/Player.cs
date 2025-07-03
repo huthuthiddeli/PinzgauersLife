@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Unity.VisualScripting;
-using Unity.Android.Gradle.Manifest;
 
 public class Player : MonoBehaviour
 {

@@ -29,6 +29,8 @@ public class Player : MonoBehaviour
     public float dirtinessModifier = 0.001f;
     public float starvingModifier = 0.5f;
     public float interactRange = 3f;
+    public float maxShakeIntensity = 0.5f;   // Max shake distance
+    public float shakeFrequency = 20f;       // Shake speed multiplier
 
 
     [Header("Movement Settings")]
@@ -43,13 +45,8 @@ public class Player : MonoBehaviour
     public float mouseSensitivity = 500f;
     public Transform playerCamera;
 
-    [Header("Ground Check")]
-    public Transform groundCheck;
-    public float groundDistance = 0.01f;
-    public LayerMask groundMask;
-
-    private CharacterController controller;
     private Vector3 velocity;
+    private Vector3 initialPosition;
     private bool isGrounded;
     private float xRotation = 0f;
 
@@ -59,13 +56,16 @@ public class Player : MonoBehaviour
     public UIElement hungerBar;
     public UIElement pissBar;
     public UIElement moneyLabel;
-    public Camera miniMapCamera;
+    
+    private CharacterController controller;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked; // Hide and lock cursor
         controller = gameObject.AddComponent<CharacterController>();
+        initialPosition = transform.position;
+
 
         InitPlayerVariables();
     }
@@ -87,17 +87,22 @@ public class Player : MonoBehaviour
     void Update()
     {
         UpdatePlayerStats();
-
-
-        HandleMovement();
-        HandleMouseLook();
-
+ 
         // Interacting with environment
         HandleInput();
         HandlePlayerStats();
     }
 
-    void HandleMovement()
+    public void Jump()
+    {
+
+        if (controller.isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+    }
+
+    public void HandleMovement()
     {
         // Ground check
         isGrounded = controller.isGrounded;
@@ -122,18 +127,12 @@ public class Player : MonoBehaviour
             controller.Move(move * moveSpeed * Time.deltaTime);
         }
 
-        // Jump
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-        }
-
         // Gravity
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
     }
 
-    void HandleMouseLook()
+    public void HandleMouseLook()
     {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
@@ -151,11 +150,6 @@ public class Player : MonoBehaviour
 
     void HandleInput()
     {
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            Interact();
-        }
-
         if (Input.GetKeyDown(KeyCode.O))
         {
             this.hp -= 20;
@@ -171,13 +165,20 @@ public class Player : MonoBehaviour
             this.thirstiness += 10;
             this.money += 10;
         }
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            this.alcoholLevel = 100;
+        }
     }
 
-    void Interact()
+    public void Interact()
     {
+        Debug.Log("This is the player interaction method!");
+
         if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, interactRange))
         {
             IConsumable consumable = hit.collider.GetComponent<IConsumable>();
+         
             if (consumable != null)
             {
                 consumable.Consume(gameObject);
@@ -196,6 +197,7 @@ public class Player : MonoBehaviour
     void UpdatePlayerStats()
     {
         float dt = Time.deltaTime;
+        IntoxicateScreen();
 
         if (hp <= 0)
         {
@@ -223,8 +225,27 @@ public class Player : MonoBehaviour
         dirtiness += dirtinessModifier * dt;
     }
 
-    void MiniMapTrackPlayr()
+
+    //TODO: INTOXICATION EFFECT TO CAMERA AND PLAYER
+    public void IntoxicateScreen()
     {
-        this.miniMapCamera.transform.position = new Vector3(this.transform.position.x, this.miniMapCamera.transform.position.y + 30, this.transform.position.z);
+        float intensity = Mathf.Clamp01(this.alcoholLevel / 100f);
+        if (intensity > 0f)
+        {
+            float shakeAmount = intensity * maxShakeIntensity;
+
+            // Real shake = random rapid jitter, not smooth
+            Vector3 shakeOffset = new Vector3(
+                (Random.value - 0.5f) * 2f,
+                (Random.value - 0.5f) * 2f,
+                0f
+            ) * shakeAmount;
+
+            transform.localPosition = initialPosition + shakeOffset;
+        }
+        else
+        {
+            transform.localPosition = initialPosition;
+        }
     }
 }

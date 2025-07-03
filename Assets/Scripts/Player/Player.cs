@@ -1,9 +1,4 @@
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using Unity.VisualScripting;
-using Unity.Android.Gradle.Manifest;
 
 public class Player : MonoBehaviour
 {
@@ -20,11 +15,21 @@ public class Player : MonoBehaviour
     [Range(0, 100)]
     public float alcoholLevel = 0f;
     [Range(0, 100)]
-    public float pissLevel = 0f;
-    [Range(0, 100)]
-    public float shitLevel = 0f;
+    public float pissLevel = 100f;
     [Range(0, 100)]
     public float dirtiness = 0f;
+    public float money = 0f;
+    public float moneyBank = 0f;
+
+    [Header("Player modifiers")]
+    public float hungerModifier = 0.1f;
+    public float thirstModifier = 0.1f;
+    public float alcoholModifier = 0.1f;
+    public float pissModifier = 0.1f;
+    public float dirtinessModifier = 0.001f;
+    public float starvingModifier = 0.5f;
+    public float interactRange = 3f;
+
 
     [Header("Movement Settings")]
     public float moveSpeed = 10f;
@@ -49,8 +54,12 @@ public class Player : MonoBehaviour
     private float xRotation = 0f;
 
     [Header("Referencess")]
-    public HealthBar healthBar;
-
+    public UIElement healthBar;
+    public UIElement waterBar;
+    public UIElement hungerBar;
+    public UIElement pissBar;
+    public UIElement moneyLabel;
+    public Camera miniMapCamera;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -58,18 +67,34 @@ public class Player : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked; // Hide and lock cursor
         controller = gameObject.AddComponent<CharacterController>();
 
-        healthBar.SetMaxHealth(hp);
+        InitPlayerVariables();
+    }
+
+    void InitPlayerVariables()
+    {
+        healthBar.SetMaxValue(hp);
+        waterBar.SetMaxValue(thirstiness);
+        hungerBar.SetMaxValue(hungriness);
+        pissBar.SetMaxValue(pissLevel);
+        moneyLabel.SetText("Money: " + money.ToString("F2"));
+
+        pissLevel = 0.0f;
+        thirstiness = 0.0f;
+        hungriness = 0.0f;
     }
 
     // Update is called once per frame
     void Update()
     {
+        UpdatePlayerStats();
+
+
         HandleMovement();
         HandleMouseLook();
 
         // Interacting with environment
         HandleInput();
-        HandleHealth();
+        HandlePlayerStats();
     }
 
     void HandleMovement()
@@ -135,32 +160,71 @@ public class Player : MonoBehaviour
         {
             this.hp -= 20;
         }
+
+        if (Input.GetKeyDown(KeyCode.KeypadMinus))
+        {
+            this.hungriness += 10;
+        }
+
+        if (Input.GetKeyDown(KeyCode.KeypadPlus))
+        {
+            this.thirstiness += 10;
+            this.money += 10;
+        }
     }
 
     void Interact()
     {
-        LayerMask layerMask = LayerMask.GetMask("Character", "Beer");
-        RaycastHit hit;
-
-        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, layerMask))
-
+        if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, interactRange))
         {
-            Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
-            Debug.Log("Did Hit");
+            IConsumable consumable = hit.collider.GetComponent<IConsumable>();
+            if (consumable != null)
+            {
+                consumable.Consume(gameObject);
+            }
         }
-        else
-        {
-            Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * 1000, Color.white);
-            Debug.Log("Did not Hit");
-        }
-
-
-        this.alcoholLevel += 10;
     }
 
-    void HandleHealth()
+    void HandlePlayerStats()
     {
-        this.healthBar.SetHealth(this.hp);
+        this.waterBar.SetValue(this.thirstiness);
+        this.hungerBar.SetValue(this.hungriness);
+        this.healthBar.SetValue(this.hp);
+        this.moneyLabel.SetText("Money: " + this.money.ToString("F2") + "$");
     }
 
+    void UpdatePlayerStats()
+    {
+        float dt = Time.deltaTime;
+
+        if (hp <= 0)
+        {
+            Debug.Log("Player is dead!");
+            // Handle player death (e.g., respawn, game over)
+            return;
+        }
+
+        if (hungriness <= 0 || thirstiness <= 0)
+        {
+            Debug.Log("Player is starving!");
+            this.hp -= starvingModifier * dt;
+        }
+
+        if( pissLevel >= 100f)
+        {
+            Debug.Log("Your player pissed yourself!");
+            // PissInPants();
+            this.pissLevel = 0f;
+        }
+
+        hungriness += hungerModifier * dt;
+        thirstiness += thirstModifier * dt;
+        alcoholLevel -= alcoholModifier * dt;
+        dirtiness += dirtinessModifier * dt;
+    }
+
+    void MiniMapTrackPlayr()
+    {
+        this.miniMapCamera.transform.position = new Vector3(this.transform.position.x, this.miniMapCamera.transform.position.y + 30, this.transform.position.z);
+    }
 }

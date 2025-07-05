@@ -8,6 +8,11 @@ public abstract class NPCState
     public abstract void Exit();
 }
 
+public class StateMachine
+{
+
+}
+
 public class IdleState : NPCState
 {
     public IdleState(NPCController npc) : base(npc) { }

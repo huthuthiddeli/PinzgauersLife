@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Leberkassemmal : MonoBehaviour, IFood, IConsumable, IBaseItem
+public class Leberkassemmal : MonoBehaviour, IFood, IInteractable, IBaseItem
 {
     public string Name => "Leberkassemal";
     public string Description => "A delicious Bavarian meatloaf sandwich.";
@@ -11,7 +11,7 @@ public class Leberkassemmal : MonoBehaviour, IFood, IConsumable, IBaseItem
     public float ThirstValue => 0f;
     public float AlcoholValue => 0f;
 
-    public void Consume(GameObject obj)
+    public void Interact(GameObject obj)
     {
         Player player = obj.GetComponent<Player>();
         if (player != null)

@@ -12,7 +12,14 @@ public class PlayerInputHandler : MonoBehaviour
     void Awake()
     {
         input = new InputSystem_Actions();
-        //input.Enable();
+
+        if(input is null)
+        {
+            Debug.LogError("Input System Actions not initialized.");
+            return;
+        }
+
+        input.Enable();
 
         input.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
         input.Player.Move.canceled += ctx => moveInput = Vector2.zero;

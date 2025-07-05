@@ -4,6 +4,8 @@ public class Player : MonoBehaviour
 {
     // Player-stats
     [Header("Player Stats")]
+    [SerializeField]
+    public string playerName = "Peter";
     [Range(0, 100)]
     public float hp = 100f;
     [Range(0, 100)]
@@ -19,7 +21,7 @@ public class Player : MonoBehaviour
     [Range(0, 100)]
     public float dirtiness = 0f;
     public float money = 0f;
-    public float moneyBank = 0f;
+    public float moneyBank = 69f;
 
     [Header("Player modifiers")]
     public float hungerModifier = 0.1f;
@@ -43,7 +45,6 @@ public class Player : MonoBehaviour
 
     [Header("Mouse Look")]
     public float mouseSensitivity = 500f;
-    public Transform playerCamera;
 
     private Vector3 velocity;
     private Vector3 initialPosition;
@@ -56,7 +57,9 @@ public class Player : MonoBehaviour
     public UIElement hungerBar;
     public UIElement pissBar;
     public UIElement moneyLabel;
+    public Camera playerCamera;
     
+
     private CharacterController controller;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -65,7 +68,6 @@ public class Player : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked; // Hide and lock cursor
         controller = gameObject.AddComponent<CharacterController>();
         initialPosition = transform.position;
-
 
         InitPlayerVariables();
     }
@@ -87,7 +89,6 @@ public class Player : MonoBehaviour
     void Update()
     {
         UpdatePlayerStats();
- 
         // Interacting with environment
         HandleInput();
         HandlePlayerStats();
@@ -141,7 +142,7 @@ public class Player : MonoBehaviour
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f); // Prevent flipping
 
-        playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        playerCamera.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
         // Horizontal rotation (player body)
         transform.Rotate(Vector3.up * mouseX);
@@ -169,19 +170,21 @@ public class Player : MonoBehaviour
         {
             this.alcoholLevel = 100;
         }
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            playerCamera.enabled = !playerCamera.enabled;
+        }
     }
 
     public void Interact()
     {
-        Debug.Log("This is the player interaction method!");
-
         if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, interactRange))
         {
-            IConsumable consumable = hit.collider.GetComponent<IConsumable>();
-         
-            if (consumable != null)
+            IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+            
+            if (interactable != null)
             {
-                consumable.Consume(gameObject);
+                interactable.Interact(gameObject);
             }
         }
     }
@@ -191,7 +194,7 @@ public class Player : MonoBehaviour
         this.waterBar.SetValue(this.thirstiness);
         this.hungerBar.SetValue(this.hungriness);
         this.healthBar.SetValue(this.hp);
-        this.moneyLabel.SetText("Money: " + this.money.ToString("F2") + "$");
+        this.moneyLabel.SetText("Money: " + this.money.ToString("F2") + "€");
     }
 
     void UpdatePlayerStats()
@@ -247,5 +250,7 @@ public class Player : MonoBehaviour
         {
             transform.localPosition = initialPosition;
         }
+
+
     }
 }

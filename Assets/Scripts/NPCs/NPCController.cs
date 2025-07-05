@@ -7,21 +7,31 @@ public class NPCController : MonoBehaviour
     public NPCData npcData;
     public NPCSchedule schedule;
     public DialogueLine[] dialogue;
-    public Stac stateMachine;
+    public StateMachine stateMachine;
 
-    void Start()
+    //void Start()
+    //{
+    //    //stateMachine = new StateMachine();
+    //    stateMachine.ChangeState(new IdleState(this)); // Initial state
+    //}
+
+    //void Update()
+    //{
+    //    stateMachine.Update();
+    //}
+
+    //public void Interact()
+    //{
+    //    stateMachine.ChangeState(new TalkState(this));
+    //}
+
+    private void Start()
     {
-        stateMachine = new StateMachine();
-        stateMachine.ChangeState(new IdleState(this)); // Initial state
+        
     }
 
-    void Update()
+    private void Update()
     {
-        stateMachine.Update();
-    }
-
-    public void Interact()
-    {
-        stateMachine.ChangeState(new TalkState(this));
+       
     }
 }

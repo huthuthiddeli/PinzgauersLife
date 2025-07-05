@@ -15,8 +15,3 @@ interface IFood
     float ThirstValue { get; }
     float AlcoholValue { get; }
 }
-
-interface IConsumable
-{
-    void Consume(GameObject obj);
-}
